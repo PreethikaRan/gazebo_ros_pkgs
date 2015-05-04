@@ -106,11 +106,13 @@ void GazeboRosMoveItPlanningScene::Load(physics::ModelPtr _model, sdf::ElementPt
 
   last_publish_time_ = ros::Time(0,0);
 
-  planning_scene_pub_ = this->rosnode_->advertise<moveit_msgs::PlanningScene>(this->topic_name_, 1);
+  planning_scene_pub_ = this->rosnode_->advertise<moveit_msgs::PlanningScene>(
+      this->topic_name_, 1,
+      boost::bind(&GazeboRosMoveItPlanningScene::subscriber_connected, this));
 
   // Custom Callback Queue for service
-  this->callback_queue_thread_ = boost::thread(boost::bind(
-          &GazeboRosMoveItPlanningScene::QueueThread, this));
+  this->callback_queue_thread_ = boost::thread(
+      boost::bind(&GazeboRosMoveItPlanningScene::QueueThread, this));
 
   // Create service server
   ros::AdvertiseServiceOptions aso;
@@ -129,6 +131,12 @@ void GazeboRosMoveItPlanningScene::Load(physics::ModelPtr _model, sdf::ElementPt
   // simulation iteration.
   this->update_connection_ = event::Events::ConnectWorldUpdateBegin(
       boost::bind(&GazeboRosMoveItPlanningScene::UpdateCB, this));
+}
+
+void GazeboRosMoveItPlanningScene::subscriber_connected()
+{
+  boost::mutex::scoped_lock lock(this->mutex_);
+  publish_full_scene_ = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
