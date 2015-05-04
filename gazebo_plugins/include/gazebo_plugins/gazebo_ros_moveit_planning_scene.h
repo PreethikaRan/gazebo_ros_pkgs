@@ -102,6 +102,8 @@ class GazeboRosMoveItPlanningScene : public ModelPlugin
   // Documentation inherited
   protected: virtual void UpdateCB();
 
+  protected: void subscriber_connected();
+
   /// \brief publish the complete planning scene
   private: bool PublishPlanningSceneCB(
                std_srvs::Empty::Request& req,
