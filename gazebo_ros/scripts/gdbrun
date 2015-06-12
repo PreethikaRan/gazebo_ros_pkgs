@@ -20,6 +20,6 @@ ${extra_text}
 ${run_text}
 EOF
 
-gdb -x ${TMPFILE} "${EXEC}"
+xterm -e gdb -x ${TMPFILE} "${EXEC}"
 rm -f "${TMPFILE}"
 

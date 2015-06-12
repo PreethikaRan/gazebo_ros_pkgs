@@ -1,4 +1,16 @@
 #!/bin/sh
+
+#_int() {
+  #kill -INT $child
+#}
+
+#_term() {
+  #kill -TERM $child
+#}
+
+#trap _int SIGINT
+#trap _term SIGTERM
+
 final="$@"
 
 EXT=so
@@ -19,4 +31,9 @@ then
 fi
 
 setup_path=$(pkg-config --variable=prefix gazebo)/share/gazebo/
-. $setup_path/setup.sh && gzserver $final
+. $setup_path/setup.sh
+exec gzserver $final
+
+#child=$!
+
+#wait "$child"
