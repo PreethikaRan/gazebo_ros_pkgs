@@ -32,6 +32,11 @@
 
 namespace gazebo
 {
+
+static std::string get_id(const physics::LinkPtr &link) {
+  return link->GetModel()->GetName() + "." + link->GetName();
+}
+
 GZ_REGISTER_MODEL_PLUGIN(GazeboRosMoveItPlanningScene);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -202,38 +207,10 @@ void GazeboRosMoveItPlanningScene::UpdateCB()
     const ModelPtr &model = *model_it;
     const std::string model_name = model->GetName();
 
-    // Don't declare the robot as a collision object
+    // Don't declare collision objects for the robot links
     if(model_name == model_name_) {
       continue;
     }
-
-    // Check if the gazebo model is already in the collision object map
-    std::map<std::string, moveit_msgs::CollisionObject>::iterator found_collision_object =
-      collision_object_map_.find(model_name);
-
-    // Create a new collision object representing this gazebo model if it's not in the map
-    if(found_collision_object == collision_object_map_.end() || publish_full_scene_){
-
-      ROS_INFO("Creating collision object model %s, this=%s, objects=%u",
-               model_name.c_str(),
-               model_name_.c_str(),
-               (unsigned int)collision_object_map_.size());
-
-      moveit_msgs::CollisionObject new_object;
-      new_object.id = model_name;
-      new_object.header.frame_id = "world";
-      new_object.operation = moveit_msgs::CollisionObject::ADD;
-
-      collision_object_map_[model_name] = new_object;
-      ROS_DEBUG_STREAM_NAMED("GazeboRosMoveItPlanningScene","Adding object: "<<model_name);
-    } else {
-
-      collision_object_map_[model_name].operation = moveit_msgs::CollisionObject::MOVE;
-      ROS_DEBUG_STREAM_NAMED("GazeboRosMoveItPlanningScene","Moving object: "<<model_name);
-    }
-
-    // Get a reference to the object from the map
-    moveit_msgs::CollisionObject &object = collision_object_map_[model_name];
 
     // Iterate over all links in the model, and add collision objects from each one
     // This adds meshes and primitives to:
@@ -246,6 +223,34 @@ void GazeboRosMoveItPlanningScene::UpdateCB()
         ++link_it)
     {
       const LinkPtr &link = *link_it;
+      const std::string id = get_id(link);
+
+      // Check if the gazebo model is already in the collision object map
+      std::map<std::string, moveit_msgs::CollisionObject>::iterator found_collision_object =
+        collision_object_map_.find(id);
+
+      // Create a new collision object representing this link if it's not in the map
+      if(found_collision_object == collision_object_map_.end() || publish_full_scene_){
+
+        ROS_INFO("Creating collision object for model %s, this=%s, objects=%u",
+                 model_name.c_str(),
+                 model_name_.c_str(),
+                 (unsigned int)collision_object_map_.size());
+
+        moveit_msgs::CollisionObject new_object;
+        new_object.id = id;
+        new_object.header.frame_id = "world";
+        new_object.operation = moveit_msgs::CollisionObject::ADD;
+
+        collision_object_map_[id] = new_object;
+        ROS_DEBUG_STREAM_NAMED("GazeboRosMoveItPlanningScene","Adding object: "<<id);
+      } else {
+        collision_object_map_[id].operation = moveit_msgs::CollisionObject::MOVE;
+        ROS_DEBUG_STREAM_NAMED("GazeboRosMoveItPlanningScene","Moving object: "<<id);
+      }
+
+      // Get a reference to the object from the map
+      moveit_msgs::CollisionObject &object = collision_object_map_[id];
 
       gazebo::math::Pose link_pose = link->GetWorldPose();
       geometry_msgs::Pose link_pose_msg;
