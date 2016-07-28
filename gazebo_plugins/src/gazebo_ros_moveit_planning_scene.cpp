@@ -345,8 +345,10 @@ void GazeboRosMoveItPlanningScene::UpdateCB()
             boost::shared_ptr<MeshShape> mesh_shape = boost::dynamic_pointer_cast<MeshShape>(shape);
             std::string name = mesh_shape->GetName();
             std::string uri = mesh_shape->GetMeshURI();
+            gazebo::math::Vector3 scale = mesh_shape->GetScale();
             const Mesh *mesh = MeshManager::Instance()->GetMesh(uri);
 
+            gzwarn << " mesh scale: " <<scale<< std::endl;
             if(!mesh) {
               gzwarn << "Shape has mesh type but mesh could not be retried from the MeshManager. Loading ad-hoc!" << std::endl;
               gzwarn << " mesh uri: " <<uri<< std::endl;
@@ -388,9 +390,9 @@ void GazeboRosMoveItPlanningScene::UpdateCB()
                       const int index = submesh->GetIndex(v);
                       const gazebo::math::Vector3 vertex = submesh->GetVertex(v);
 
-                      mesh_msg.vertices[index].x = vertex.x;
-                      mesh_msg.vertices[index].y = vertex.y;
-                      mesh_msg.vertices[index].z = vertex.z;
+                      mesh_msg.vertices[index].x = vertex.x * scale.x;
+                      mesh_msg.vertices[index].y = vertex.y * scale.y;
+                      mesh_msg.vertices[index].z = vertex.z * scale.z;
 
                       mesh_msg.triangles[v/3].vertex_indices[v%3] = index;
                     }
@@ -410,9 +412,9 @@ void GazeboRosMoveItPlanningScene::UpdateCB()
                       const int index = submesh->GetIndex(v);
                       const gazebo::math::Vector3 vertex = submesh->GetVertex(v);
 
-                      mesh_msg.vertices[index].x = vertex.x;
-                      mesh_msg.vertices[index].y = vertex.y;
-                      mesh_msg.vertices[index].z = vertex.z;
+                      mesh_msg.vertices[index].x = vertex.x * scale.x;
+                      mesh_msg.vertices[index].y = vertex.y * scale.y;
+                      mesh_msg.vertices[index].z = vertex.z * scale.z;
 
                       if(v < n_vertices-2) mesh_msg.triangles[v].vertex_indices[0] = index;
                       if(v > 0 && v < n_vertices-1) mesh_msg.triangles[v-1].vertex_indices[1] = index;
